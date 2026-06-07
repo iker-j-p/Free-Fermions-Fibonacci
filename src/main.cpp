@@ -14,7 +14,7 @@ const double pi = 3.14159265358979323846;
 const double phi = (1 + sqrt(5)) / 2; // Golden ratio
 const double e = 2.71828182845904523536; // Euler's number
 
-long N = 378;
+long N = 82;
 double W = 0;
 long P = N/2;
 
@@ -25,14 +25,18 @@ string entropy_order = "forward"; //"forward", "backward", "center"
 double J = 1;
 double sigma = 0.3;
 double h = 0.6;
-double theta = 1/e; 
+double theta = 2 - sqrt(2);
 
-long minn = 5;
-long maxn = 1598; //2,"3",'4',6,"9",14,22,"35",'56',90,"145",234,378,"611",'988',1598,"2585",4182
-long minf = 6;
-long maxf = 17;
+ /*-----------------------------------------------------------------------------
+                            Functions
+ -----------------------------------------------------------------------------*/
+
+long minn = 2;
+long maxn = 986; //2,"3",'4',6,"9",14,22,"35",'56',90,"145",234,378,"611",'988',1598,"2585",4182
+long minf = 2;
+long maxf = 16;
 long l = 7;
-
+// 2,5,7,12,19,31,50,81,131,212,343,555,898,1453                     1            5           29          169          985           5741
  /*-----------------------------------------------------------------------------
                             Problem Variables
  -----------------------------------------------------------------------------*/
@@ -72,7 +76,7 @@ int main()
     H = Chain_H(N,W,boundary,chain,J,sigma,h,theta);
     Vector Eigen; Matrix Basis;
     H.Diagonalize(Basis,Eigen);
-    H.Write();
+    // H.Write();
     Basis.Save("data/eigenvectors.txt");
     Eigen.Save("data/eigenvalues.txt");
 
@@ -85,7 +89,7 @@ int main()
     density.Save("data/density.txt");
 
     std::cout << "=====Gap vs N=====" << std::endl;
-    Gap = Gap_vs_N(minn,maxn,W,boundary,chain,J,sigma,h);
+    Gap = Gap_vs_N(minn,maxn,W,boundary,chain,J,sigma,h,theta);
     Gap.Save("data/energy_gap.txt");
 
     std::cout << "=====Entanglement Entropy=====" << std::endl;
@@ -109,7 +113,7 @@ int main()
     // IPR.Save("data/inverse_participation_ratio.txt");
     
 
-    if (chain == "dimerized" || chain == "fibonacci"){
+    if (chain == "dimerized" || chain == "fibonacci" || chain == "sturmian" || chain == "fib_57" || chain == "fib_59" || chain == "fib_711"){
         Gap_vs_Sigma(0,0.5,N,W,boundary,chain,theta);
         // EGap.Save("data/energy_gap_s.txt");
     }
@@ -137,7 +141,7 @@ int main()
     FILE* fileenergy = fopen("data/eigenvalues_f.txt","wt");
     FILE* fileenergyvssigma = fopen("data/eigenvalues_f_sigma.txt","wt");
     for (int i=minf;i<=maxf;i++){
-        fib = Fibonacci_num(i);
+        fib = Not_Fibonacci_num(i,chain);
         if (fib%2==1){
             std::cout << "Fibonacci number = " << fib << std::endl;
             Matrix H(fib+1);
@@ -158,8 +162,8 @@ int main()
         }
     }
     std::cout << "=====IPR=====" << std::endl;
-    Vector IPR(Fibonacci_num(maxf)+1);
-    IPR = Inverse_participation_ratio(Fibonacci_num(maxf)+1,W,boundary,chain,J,sigma,h,theta,minf,maxf);
+    Vector IPR(Not_Fibonacci_num(maxf,chain)+1);
+    IPR = Inverse_participation_ratio(Not_Fibonacci_num(maxf,chain)+1,W,boundary,chain,J,sigma,h,theta,minf,maxf);
     // IPR.Write();
     IPR.Save("data/inverse_participation_ratio.txt");
 

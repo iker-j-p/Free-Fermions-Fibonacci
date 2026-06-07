@@ -137,7 +137,91 @@ Vector Sturmian_Sequence(long N, double theta){
     for (int i=2; i<=N+1; i++){
         sequence(i-1) = floor(i*theta) - floor((i-1)*theta);
     }
+    std::cout << "Sturmian sequence generated with theta = " << theta << std::endl;
+    sequence.Write(); 
     return sequence;
+}
+
+Vector generate_custom_chain(long N){
+    Vector sequence(N);
+
+    // Start with a single '1'
+    sequence(1) = 1; 
+
+    long j = 1; // j tracks where we are writing next
+
+    // i tracks what we are reading. 
+    // We stop when the write index j exceeds N.
+    for (long i = 1; j <= N; i++){
+
+        if (sequence(i) == 1){
+            // If the site is '1', write "10101"
+            if (j   <= N) sequence(j)   = 1;
+            if (j+1 <= N) sequence(j+1) = 0;
+            if (j+2 <= N) sequence(j+2) = 1;
+            if (j+3 <= N) sequence(j+3) = 0;
+            if (j+4 <= N) sequence(j+4) = 1;
+            
+            j += 5; // Move the write index forward by 5
+        }
+        else if (sequence(i) == 0){
+            // If the site is '0', write "1010101"
+            if (j   <= N) sequence(j)   = 1;
+            if (j+1 <= N) sequence(j+1) = 0;
+            if (j+2 <= N) sequence(j+2) = 1;
+            if (j+3 <= N) sequence(j+3) = 0;
+            if (j+4 <= N) sequence(j+4) = 1;
+            if (j+5 <= N) sequence(j+5) = 0;
+            if (j+6 <= N) sequence(j+6) = 1;
+            
+            j += 7; // Move the write index forward by 7
+        }
+    }
+    
+    return sequence;
+}
+
+long Not_Fibonacci_num(long N, string chain){
+    long N_0 = 0;
+    long N_1 = 1;
+    if (chain == "fib_57"){
+        Vector N_seq(N);
+        long prev_n = 0;
+        N_seq(1)=1;
+        N_seq(2)=5;
+        for (int i=3;i<=N;i++){
+            prev_n = 0;
+            for (int j=1;j<i-1;j++){
+                prev_n = prev_n + N_seq(j) + N_seq(j+1);
+            }
+            N_seq(i) = 3*N_seq(i-1) + 2*(prev_n+1);
+        }
+        N_seq.Write();
+        return N_seq(N);
+    }
+    else if (chain == "fib_711"){
+        N_0 = 1;
+        N_1 = 3;
+    }
+    else if (chain == "fib_59"){
+        N_0 = 2;
+        N_1 = 3;
+    }
+    else{
+        return Fibonacci_num(N);
+    }
+
+    long number;
+    if (N<=0){return N_0;}
+    if (N==1){return N_1;}
+    for (int i=2;i<=N;i++){
+        number = N_1 + N_0;
+        N_0 = N_1;
+        N_1 = number;
+        // std::cout << fibonacci << std::endl;
+    }
+    return number;
+
 }
 
 Vector Not_Fibonacci(long N, string chain){
@@ -146,13 +230,17 @@ Vector Not_Fibonacci(long N, string chain){
     Vector sequence2 (1);
 
     if (chain == "fib_57"){
-        sequence1(1) = 1;
-        sequence1.Append(0);
-        sequence2 (1) = 1;
-        sequence2.Append(0);
-        sequence2.Append(1);
-        sequence2.Append(0);
-        sequence2.Append(1);
+        // sequence1(1) = 1;
+        // sequence1.Append(0);
+        // sequence2 (1) = 1;
+        // sequence2.Append(0);
+        // sequence2.Append(1);
+        // sequence2.Append(0);
+        // sequence2.Append(1);
+        Vector seq_fib_57(N);
+        seq_fib_57 = generate_custom_chain(N);
+        // seq_fib_57.Write();
+        return seq_fib_57;
     }
 
     else if (chain == "fib_711"){
@@ -189,7 +277,7 @@ Vector Not_Fibonacci(long N, string chain){
     return sequence;
 }
 
-Matrix Chain_H(long N, double W, string boundary, string chain, double J=1, double sigma=0.1, double h=1, double theta=0.6){
+Matrix Chain_H(long N, double W, string boundary, string chain, double J=1, double sigma=0.1, double h=0.6, double theta=0.6){
     Matrix H(N);
     if (chain == "uniform"){
         for(int i=1;i<N;i++){
@@ -226,14 +314,17 @@ Matrix Chain_H(long N, double W, string boundary, string chain, double J=1, doub
             if (i<N/2){
                 H(i,i+1) = H(i+1,i) = -exp(-h*(N/2-i));
             }
-            else{
+            else if (i>N/2){
                 H(i,i+1) = H(i+1,i) = -exp(h*(N/2-i));
+            }
+            else if (i==N/2){
+                H(i,i+1) = H(i+1,i) = -exp(-h/2);
             }
             H(i,i) = Rand(-W,W);
         }
         H(N,N) = Rand(-W,W);
         if (boundary == "PBC"){
-            H(1,N) = H(N,1) = -exp(h*(N/2-1));
+            H(1,N) = H(N,1) = -exp(-h*(N/2-1));
         }
     }
     else if (chain == "random"){
@@ -269,6 +360,7 @@ Matrix Chain_H(long N, double W, string boundary, string chain, double J=1, doub
         if (boundary == "PBC"){
             H(1,N) = H(N,1) = J*sequence(1);
         }
+        // sequence.Write();
     }
 
     else if (chain == "sturmian"){
@@ -321,12 +413,12 @@ double Energy_gap(Vector V, long N, long P){
     return gap;
 }
 
-Vector Gap_vs_N(long minn, long maxn, double W, string boundary, string chain, double J=1, double sigma=0.1, double h=1, double theta=0.5){
+Vector Gap_vs_N(long minn, long maxn, double W, string boundary, string chain, double J=1, double sigma=0.1, double h=0.6, double theta=0.5){
     Vector EGap(maxn);
     long j = 0;
     for (int i=minn; j<maxn; i++){
         if (chain == "fibonacci" || chain == "sturmian" || chain == "fib_57" || chain == "fib_59"){
-            j = Fibonacci_num(i)+1;
+            j = Not_Fibonacci_num(i,chain)+1;
         }
         else{j = i;}
         Matrix H(j);
@@ -413,14 +505,14 @@ double Get_IPR(long N, Matrix Basis){
     return IPR_total_avg; 
 }
 
-Vector Inverse_participation_ratio(long N, double W, string boundary, string chain, double J=1, double sigma=0.1, double h=1, double theta=0.5, long minf=1, long maxf=16){
-    if (chain == "fibonacci" || chain == "sturmian" || chain == "fib_57" || chain == "fib_59"){
+Vector Inverse_participation_ratio(long N, double W, string boundary, string chain, double J=1, double sigma=0.1, double h=0.6, double theta=0.5, long minf=1, long maxf=16){
+    if (chain == "fibonacci" || chain == "sturmian" || chain == "fib_57" || chain == "fib_59" || chain == "fib_711"){
         long fib;
-        Vector IPR(Fibonacci_num(maxf)+1);
+        Vector IPR(Not_Fibonacci_num(maxf,chain)+1);
         for (int i=minf;i<=maxf;i++){
             std::cout << "Entry:" << i << std::endl;
-            fib = Fibonacci_num(i);
-            std::cout << "Fibonacci number:" << fib << std::endl;
+            fib = Not_Fibonacci_num(i,chain);
+            std::cout << "Not Fibonacci number:" << fib << std::endl;
             if (fib%2==1){
                 Matrix H(fib+1);
                 H = Chain_H(fib+1,W,boundary,chain,J,sigma,h,theta);
@@ -455,7 +547,7 @@ Vector Density_Function(long N, Matrix C){
     return density;
 }
 
-Vector entropy_vs_N(long minn, long maxn, double W, string boundary, string chain, double J=1, double sigma=0.1, double h=1, double theta=0.5, string entropy_order = "forward"){
+Vector entropy_vs_N(long minn, long maxn, double W, string boundary, string chain, double J=1, double sigma=0.1, double h=0.6, double theta=0.5, string entropy_order = "forward"){
     Vector Entropy_N(maxn);
     long j = 0;
     for (int i=minn; j<maxn; i++){

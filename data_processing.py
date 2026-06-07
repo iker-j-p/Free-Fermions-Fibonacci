@@ -2,10 +2,16 @@ import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
+import matplotlib
 import os
 import re
+font = {'family' : 'DejaVu Sans',
+        'weight' : 'bold',
+        'size'   : 18}
 
-color = "orange"
+matplotlib.rc('font', **font)
+# color = "darkgoldenrod"
+color = "purple"
 # try:
 #     energy_gap = np.loadtxt("energy_gap.txt")
 #     print(energy_gap)
@@ -40,7 +46,7 @@ def plot_correlation_matrix(filename = "correlation.txt"):
         plt.figure(figsize=(8, 6)) # Size in inches
         
         # imshow drawing squares using the seismic map, forcing they range to be symmetric for 0 (white) in the middle
-        im = plt.imshow(correlation, cmap='seismic', origin='upper', norm=colors.SymLogNorm(linthresh=1e-19, vmin=-limit, vmax=limit)) # Logarithmic color scale with a small cutoff to avoid log(0)
+        im = plt.imshow(correlation, cmap='seismic', origin='upper', norm=colors.Normalize(vmin=-limit, vmax=limit)) # Logarithmic color scale with a small cutoff to avoid log(0)
 
         # Styling
         plt.colorbar(im, label="Correlation Intensity $C_{ij}$")
@@ -114,8 +120,8 @@ def plot_energy_gap(filename = "energy_gap.txt"):
         print(f"Loaded Vector of size: {length}")
 
         # Only represent 4p+2 to avoid degeneration
-        x = x[1::4]
-        energy_gap = energy_gap[1::4]
+        x = x[1::2]
+        energy_gap = energy_gap[1::2]
 
         # Filter Data, only keep points where Gap > 0
         mask = energy_gap > 1e-60 
@@ -133,18 +139,19 @@ def plot_energy_gap(filename = "energy_gap.txt"):
         gap_fit = np.exp(intercept) * (N_clean ** slope)
         
 
-        # # Reference line
-        # ref_x = np.linspace(min(N_clean), max(N_clean), 100)
-        # # Scale the line to match the first data point roughly
-        # ref_y = (ref_x**(-1)) * (gaps_clean[0] * ref_x[0]) 
+        # Reference line
+        ref_x = np.linspace(min(N_clean), max(N_clean), 100)
+        # Scale the line to match the first data point roughly
+        ref_y = (ref_x**(-1)) * (gaps_clean[0] * ref_x[0]) 
 
         # Plot Simulation data
         plt.figure(figsize=(8,6))
-        plt.loglog(N_clean,gaps_clean, color, label = "Simulation Data", markersize = 7, marker=".")
+        plt.plot(N_clean,gaps_clean, color, label = "Simulation Data", markersize = 7, marker=".",linestyle='', zorder=1)
         # Plot the approximation line (dashed black line)
-        # plt.loglog(N_clean,gap_fit,"k--", label=f"Fit: $N^{{{slope:.3f}}}$, $R^2$ = {r:.4f}", linewidth=2, zorder=3)
-        # Plot Reference
-        # plt.loglog(ref_x, ref_y, 'r--', alpha=0.5, label='Reference $1/N$ (Metal)')
+        # plt.loglog(N_clean,gap_fit,"k--", label=f"Fit: $N^{{{slope:.3f}}}$, $R^2$ = {r:.4f}", linewidth=2, zorder=0, alpha=0.7)
+
+        # # Plot Reference
+        # # plt.loglog(ref_x, ref_y, 'r--', alpha=0.5, label='Reference $1/N$ (Metal)')
         # Style
         plt.title("Scaling of Energy Gap")
         plt.xlabel("System Size ($N$)")
@@ -170,8 +177,8 @@ def plot_energy_gap_s(filename = "energy_gap_s.txt"):
         print(f"Loaded Vector of size: {length}")
 
         # Only represent 4p+2 to avoid degeneration
-        x = x[1::4]
-        energy_gap = energy_gap[1::4]
+        x = x[::]
+        energy_gap = energy_gap[::]
 
         # Filter Data, only keep points where Gap > 0
         mask = energy_gap > 1e-60 
@@ -188,10 +195,10 @@ def plot_energy_gap_s(filename = "energy_gap_s.txt"):
 
         # Plot Simulation data
         plt.figure(figsize=(8,6))
-        plt.loglog(d_clean,gaps_clean, color, label = "Simulation Data", markersize = 7, marker=".")
+        plt.loglog(d_clean,gaps_clean, color, label = "Simulation Data", markersize = 7, marker=".", linestyle='', zorder=1)
         # Plot the approximation line (dashed black line)
         gap_fit = np.exp(intercept) * (d_clean ** slope)
-        plt.loglog(d_clean,gap_fit,"k--", label=f"Fit: $\delta^{{{slope:.3f}}}$, $R^2$ = {r:.4f}", linewidth=2, zorder=3)
+        plt.loglog(d_clean,gap_fit,"k--", label=f"Fit: $\delta^{{{slope:.3f}}}$, $R^2$ = {r:.4f}", linewidth=2, zorder=0, alpha=0.7)
         # Style
         plt.title("Scaling of Energy Gap vs delta")
         plt.xlabel("delta ($\delta$)")
@@ -213,12 +220,20 @@ def plot_entanglement_entropy (filename = "entropy.txt"):
         # Load data
         entropy = np.loadtxt(filename)
         l_ent = len(entropy)
-        x = np.arange(1,l_ent+1)
-        print(f"loaded vector of size: {l_ent-1}")
+        x = np.arange(0,l_ent)
+        print(f"loaded vector of size: {l_ent}")
+
+        log_reference = lambda l: (1.215/6)*np.log(2*(l_ent-1)/np.pi * np.sin(np.pi * l / ( l_ent-1))) + 0.38 
+        vol_reference = lambda l: 0.5 + 0.1*l
+
+        
 
         # Plot and stylize
         plt.figure(figsize=(8,6))
         plt.plot(x,entropy,color,label = "Simulation Entropy", markersize = 7, marker=".")
+        plt.plot(np.arange(0.1,l_ent-1,0.1), log_reference(np.arange(0.1,l_ent-1,0.1)), 'r--', label='Reference $S(l, L) = \\frac{c}{6} \ln \left( \\frac{2L}{\pi} \sin \left( \\frac{\pi l}{L} \\right) \\right) + S_0$', alpha=0.5)
+        # plt.plot(np.arange(0,l_ent//2,0.1), vol_reference(np.arange(0,l_ent//2,0.1)), 'g--', label='Reference $S(l) = 0.50 + 0.1 l$', alpha=0.5)
+        plt.xscale('log')
         plt.title(f"Entanglement Entropy ($N = ${l_ent-1})")
         plt.xlabel("Length $l$")
         plt.ylabel("Entanglement Entropy $S(l)$")
@@ -433,7 +448,7 @@ def plot_all_energies(matrices):
         
         # Scatter plot for this specific system size
         # s=4 is the dot size, alpha=0.7 makes dense areas look darker
-        plt.scatter(x_vals, energies, color=color, s=7, alpha=0.7, marker='.')
+        plt.scatter(x_vals, energies, color=color, s=15, alpha=0.7, marker='_')
 
     # Styling
     plt.title("Energy Spectrum")
@@ -484,11 +499,11 @@ def plot_ipr(filename):
         N = ipr.size  
         print(f"Loaded IPR vector of size: {ipr.size}")
         # print(ipr)
-        ipr_values = ipr[::1] 
+        ipr_values = ipr[1::4] # Take every 100th element to reduce noise and focus on larger N values 
 
         # Filter Data, only keep points where Gap > 0
-        mask = ipr_values > 1e-60 
-        N_clean = np.arange(1, N + 1)[mask]
+        mask = (ipr_values > 1e-60) # & np.insert(np.diff(ipr_values) < 1e-6, 0, True)
+        N_clean = np.arange(1, N , 4)[mask]
         ipr_clean = ipr_values[mask]
 
         # 1. Take the natural logarithm of the clean data
@@ -503,20 +518,28 @@ def plot_ipr(filename):
         
         print(f"Calculated IPR scaling exponent (slope): {slope:.4f}, $R^2$ = {r:.4f}")
         
-        # 3. Generate the data points for the fit line: y = e^(intercept) * x^(slope)
-        ipr_fit = np.exp(intercept) * (N_clean ** slope)
-        
+        # # 3. Generate the data points for the fit line: y = e^(intercept) * x^(slope)
+        # ipr_fit = np.exp(intercept) * (N_clean ** slope)
+
+        # # Calculate the local derivative (running scaling exponent / flow)
+        # # d(log_ipr) / d(log_N)
+        # running_exponent = np.gradient(log_ipr, log_N)
+        # deriv_mask = np.insert(np.abs(np.diff(running_exponent)) < 1e-2, 0, True)
+        # running_clean = running_exponent[deriv_mask]
+        # N_deriv_clean = N_clean[deriv_mask]
 
         # Plot and stylize
         plt.figure(figsize=(8,6))
-        plt.loglog(N_clean, ipr_clean, color, label="Inverse Participation Ratio", markersize=7, marker=".") # PLot every 2nd element
+        plt.plot(N_clean, ipr_clean, color, label="Inverse Participation Ratio", markersize=7, marker=".", zorder=1,linestyle="") # PLot every 2nd element
         plt.title("Inverse Participation Ratio")
         plt.xlabel("System Size $N$")
         plt.ylabel("$IPR(N)$")
         plt.grid(True, which="both", linestyle="--", alpha=0.6)
 
-        # 4. Plot the approximation line (dashed black line)
-        plt.loglog(N_clean, ipr_fit, "k--", label=f"Fit: $N^{{{slope:.3f}}}, $R^2$ = {r:.3f}$", linewidth=2, zorder=3)
+        # # 4. Plot the approximation line (dashed black line)
+        # plt.plot(N_clean, ipr_fit, "k--", label=f"Fit: $N^{{{slope:.3f}}}, $R^2$ = {r:.3f}$", linewidth=1.5, zorder=0, alpha=0.7)
+        # plt.plot(N_deriv_clean, running_clean, "k--", label=f"First derivative of IPR", linewidth=1.5, zorder=0, alpha=0.7)
+
 
         plt.legend()
         plt.show()
@@ -643,7 +666,7 @@ def plot_energy_spectrum_vs_delta(filename):
             delta = i * 1 / 20
             N = energies.size
             x_vals = np.full(N, delta)
-            plt.scatter(x_vals, energies, color=color, s=7, alpha=0.7, marker='.')
+            plt.scatter(x_vals, energies, color=color, s=15, alpha=0.7, marker='_')
 
         plt.title("Energy Spectrum vs delta")
         plt.xlabel("delta ($\\delta$)")
@@ -665,7 +688,7 @@ def plot_density_of_states(filename):
         energies = all_energies[-1]
         x = np.arange(0,2,50)
 
-        # rho = lambda x: (1/(2*np.pi))/np.sqrt((1-(x/(2))**2))
+        rho = lambda x: (1/(2*np.pi))/np.sqrt((1-(x/(2))**2))
         
         plt.figure(figsize=(8, 6))
         plt.hist(energies, color=color, bins=50, density=True, alpha=0.7, edgecolor='black', label="Simulation DOS")
@@ -742,7 +765,6 @@ if __name__ == "__main__":
     # # plot_histogram_gap_ratio("data/energy_gap_ratio_vs_site.txt") #
 
     plot_energy_gap("data/energy_gap.txt")
-    plot_energy_gap_s("data/energy_gap_s.txt")
     plot_entanglement_entropy("data/entropy.txt")
     # plot_entropy_vs_N("data/entropy_vs_N.txt")
 
@@ -751,7 +773,8 @@ if __name__ == "__main__":
     # # plot_two_point_correlation("data/correlation.txt") #
     plot_energy_spectrum("data/eigenvalues_f.txt")
     plot_density_of_states("data/eigenvalues_f.txt")
-
+    
+    plot_energy_gap_s("data/energy_gap_s.txt")
     plot_energy_spectrum_vs_delta("data/eigenvalues_f_sigma.txt")
 
     # # plot_correlations("data/correlation_f.txt")
