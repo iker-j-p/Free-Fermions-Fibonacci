@@ -11,7 +11,9 @@ font = {'family' : 'DejaVu Sans',
 
 matplotlib.rc('font', **font)
 # color = "darkgoldenrod"
-color = "purple"
+# color = "maroon"
+color = "orange"
+
 # try:
 #     energy_gap = np.loadtxt("energy_gap.txt")
 #     print(energy_gap)
@@ -146,9 +148,9 @@ def plot_energy_gap(filename = "energy_gap.txt"):
 
         # Plot Simulation data
         plt.figure(figsize=(8,6))
-        plt.plot(N_clean,gaps_clean, color, label = "Simulation Data", markersize = 7, marker=".",linestyle='', zorder=1)
+        plt.loglog(N_clean,gaps_clean, color, label = "Simulation Data", markersize = 12, marker=".",linestyle='', zorder=1)
         # Plot the approximation line (dashed black line)
-        # plt.loglog(N_clean,gap_fit,"k--", label=f"Fit: $N^{{{slope:.3f}}}$, $R^2$ = {r:.4f}", linewidth=2, zorder=0, alpha=0.7)
+        plt.loglog(N_clean,gap_fit,"k--", label=f"Fit: $N^{{{slope:.3f}}}$, $R^2$ = {r:.4f}", linewidth=2, zorder=0, alpha=0.7)
 
         # # Plot Reference
         # # plt.loglog(ref_x, ref_y, 'r--', alpha=0.5, label='Reference $1/N$ (Metal)')
@@ -195,7 +197,7 @@ def plot_energy_gap_s(filename = "energy_gap_s.txt"):
 
         # Plot Simulation data
         plt.figure(figsize=(8,6))
-        plt.loglog(d_clean,gaps_clean, color, label = "Simulation Data", markersize = 7, marker=".", linestyle='', zorder=1)
+        plt.loglog(d_clean,gaps_clean, color, label = "Simulation Data", markersize = 15, marker=".", linestyle='', zorder=1)
         # Plot the approximation line (dashed black line)
         gap_fit = np.exp(intercept) * (d_clean ** slope)
         plt.loglog(d_clean,gap_fit,"k--", label=f"Fit: $\delta^{{{slope:.3f}}}$, $R^2$ = {r:.4f}", linewidth=2, zorder=0, alpha=0.7)
@@ -223,22 +225,37 @@ def plot_entanglement_entropy (filename = "entropy.txt"):
         x = np.arange(0,l_ent)
         print(f"loaded vector of size: {l_ent}")
 
-        log_reference = lambda l: (1.215/6)*np.log(2*(l_ent-1)/np.pi * np.sin(np.pi * l / ( l_ent-1))) + 0.38 
+        log_reference = lambda l: (0.978/6)*np.log(2*(l_ent-1)/np.pi * np.sin(np.pi * l / ( l_ent-1))) + 0.54
         vol_reference = lambda l: 0.5 + 0.1*l
 
-        
+        # # Fit the data to a logarithmic function S(l) = (c/6) * log(l) + S0
+        # entropy_fit = entropy[:l_ent/2]
+        # x_log = np.log(x[:l_ent/2])
+
+        # slope, intercept = np.polyfit(entropy_fit, x_log, 1)
+        # r = np.corrcoef(entropy_fit,x_log)[0,1]**2 
+
+        # # Reference line
+        # ref_x = np.linspace(min(x_log), max(x_log), 100)
+        # # Scale the line to match the first data point roughly
+        # ref_y = (ref_x**(-1)) * (entropy_fit[0] * ref_x[0]) 
 
         # Plot and stylize
         plt.figure(figsize=(8,6))
         plt.plot(x,entropy,color,label = "Simulation Entropy", markersize = 7, marker=".")
-        plt.plot(np.arange(0.1,l_ent-1,0.1), log_reference(np.arange(0.1,l_ent-1,0.1)), 'r--', label='Reference $S(l, L) = \\frac{c}{6} \ln \left( \\frac{2L}{\pi} \sin \left( \\frac{\pi l}{L} \\right) \\right) + S_0$', alpha=0.5)
+        # plt.plot(np.arange(0.1,l_ent-1,0.1), log_reference(np.arange(0.1,l_ent-1,0.1)), 'r--', label='Reference $S(l, L) = \\frac{c}{6} \ln \left( \\frac{2L}{\pi} \sin \left( \\frac{\pi l}{L} \\right) \\right) + S_0$', alpha=0.5)
         # plt.plot(np.arange(0,l_ent//2,0.1), vol_reference(np.arange(0,l_ent//2,0.1)), 'g--', label='Reference $S(l) = 0.50 + 0.1 l$', alpha=0.5)
-        plt.xscale('log')
+
+        # plt.plot(x_log,entropy_fit,color,label = "Simulation Entropy", markersize = 7, marker=".")
+        # plt.loglog(ref_x, ref_y, 'r--', alpha=0.5, label='Reference')
+
+
+
         plt.title(f"Entanglement Entropy ($N = ${l_ent-1})")
         plt.xlabel("Length $l$")
         plt.ylabel("Entanglement Entropy $S(l)$")
         plt.grid(True, which="both", linestyle= "--", alpha=0.6)
-        plt.legend()
+        plt.legend(fontsize=12)
         plt.show()
 
 
@@ -448,7 +465,7 @@ def plot_all_energies(matrices):
         
         # Scatter plot for this specific system size
         # s=4 is the dot size, alpha=0.7 makes dense areas look darker
-        plt.scatter(x_vals, energies, color=color, s=15, alpha=0.7, marker='_')
+        plt.scatter(x_vals, energies, color=color, s=150, alpha=0.7, marker='_')
 
     # Styling
     plt.title("Energy Spectrum")
@@ -499,11 +516,11 @@ def plot_ipr(filename):
         N = ipr.size  
         print(f"Loaded IPR vector of size: {ipr.size}")
         # print(ipr)
-        ipr_values = ipr[1::4] # Take every 100th element to reduce noise and focus on larger N values 
+        ipr_values = ipr[2::1] # Take every 100th element to reduce noise and focus on larger N values 
 
         # Filter Data, only keep points where Gap > 0
         mask = (ipr_values > 1e-60) # & np.insert(np.diff(ipr_values) < 1e-6, 0, True)
-        N_clean = np.arange(1, N , 4)[mask]
+        N_clean = np.arange(2, N , 1)[mask]
         ipr_clean = ipr_values[mask]
 
         # 1. Take the natural logarithm of the clean data
@@ -519,7 +536,7 @@ def plot_ipr(filename):
         print(f"Calculated IPR scaling exponent (slope): {slope:.4f}, $R^2$ = {r:.4f}")
         
         # # 3. Generate the data points for the fit line: y = e^(intercept) * x^(slope)
-        # ipr_fit = np.exp(intercept) * (N_clean ** slope)
+        ipr_fit = np.exp(intercept) * (N_clean ** slope)
 
         # # Calculate the local derivative (running scaling exponent / flow)
         # # d(log_ipr) / d(log_N)
@@ -530,14 +547,14 @@ def plot_ipr(filename):
 
         # Plot and stylize
         plt.figure(figsize=(8,6))
-        plt.plot(N_clean, ipr_clean, color, label="Inverse Participation Ratio", markersize=7, marker=".", zorder=1,linestyle="") # PLot every 2nd element
+        plt.loglog(N_clean, ipr_clean, color, label="Inverse Participation Ratio", markersize=12, marker=".", zorder=1,linestyle="") # PLot every 2nd element
         plt.title("Inverse Participation Ratio")
         plt.xlabel("System Size $N$")
         plt.ylabel("$IPR(N)$")
         plt.grid(True, which="both", linestyle="--", alpha=0.6)
 
         # # 4. Plot the approximation line (dashed black line)
-        # plt.plot(N_clean, ipr_fit, "k--", label=f"Fit: $N^{{{slope:.3f}}}, $R^2$ = {r:.3f}$", linewidth=1.5, zorder=0, alpha=0.7)
+        plt.plot(N_clean, ipr_fit, "k--", label=f"Fit: $N^{{{slope:.3f}}}, $R^2$ = {r:.3f}$", linewidth=1.5, zorder=0, alpha=0.7)
         # plt.plot(N_deriv_clean, running_clean, "k--", label=f"First derivative of IPR", linewidth=1.5, zorder=0, alpha=0.7)
 
 
@@ -566,7 +583,7 @@ def plot_ground_state(filename):
         plt.xlabel("Site Index $i$")
         plt.ylabel("Probability Density $|\psi_0(i)|^2$")
         plt.grid(True, which="both", linestyle="--", alpha=0.6)
-        plt.legend()
+        plt.legend(fontsize=12)
         plt.show()
 
     except Exception as e:
@@ -719,8 +736,16 @@ def plot_entropy_vs_N(filename):
         N_clean = x[mask]
         entropy_clean = entropy[mask]
 
+        # Fit the data to a logarithmic function S(N) = (c/6) * log(N) + S0
+        log_N = np.log(N_clean)
+        log_entropy = entropy_clean
+        slope, intercept = np.polyfit(log_N, log_entropy, 1)
+        r = np.corrcoef(log_N, log_entropy)[0,1]**2
+
         plt.figure(figsize=(8,6))
-        plt.plot(N_clean, entropy_clean, color, label="Entanglement Entropy", markersize=7) 
+        plt.plot(N_clean, entropy_clean, color, label="Entanglement Entropy", markersize=12, marker=".") 
+        plt.plot(N_clean, slope*log_N + intercept, "k--", label=f"Fit: ${{{slope:.3f}}}\log(N)$, $R^2$ = {r:.4f}", linewidth=1.5, zorder=0, alpha=0.7)
+        plt.xscale('log')
         plt.title("Entanglement Entropy vs System Size")
         plt.xlabel("System Size $N$")
         plt.ylabel("Entanglement Entropy $S(N)$")
@@ -766,7 +791,7 @@ if __name__ == "__main__":
 
     plot_energy_gap("data/energy_gap.txt")
     plot_entanglement_entropy("data/entropy.txt")
-    # plot_entropy_vs_N("data/entropy_vs_N.txt")
+    plot_entropy_vs_N("data/entropy_vs_N.txt")
 
     plot_ipr("data/inverse_participation_ratio.txt")
 

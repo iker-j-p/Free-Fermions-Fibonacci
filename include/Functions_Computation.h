@@ -490,7 +490,7 @@ Vector Two_point_correlation(long N, Matrix C){
     return two_point;
 }
 
-double Get_IPR(long N, Matrix Basis){
+double Get_avg_IPR(long N, Matrix Basis){
     // Measure how spread the wavevector is across the system, with 1 being completely localized and 1/N being completely delocalized
     Vector IPR_n(N);
     for (int k=1;k<=N;k++){
@@ -503,6 +503,18 @@ double Get_IPR(long N, Matrix Basis){
     }
     double IPR_total_avg = Sum(IPR_n)/N;  // Normalize by the system size to get a value between 1/N and 1
     return IPR_total_avg; 
+}
+
+double Get_IPR(long N, Matrix Basis){
+    // Measure how spread the wavevector is across the system, with 1 being completely localized and 1/N being completely delocalized
+
+    // Calculate the sum of the fourth power of the coefficients of the eigenvector, which gives the IPR
+    double sum = 0;
+    for (int i=1;i<=N;i++){
+        sum += pow(Basis(i,N/2),4);
+    }
+
+    return sum; 
 }
 
 Vector Inverse_participation_ratio(long N, double W, string boundary, string chain, double J=1, double sigma=0.1, double h=0.6, double theta=0.5, long minf=1, long maxf=16){
@@ -547,15 +559,16 @@ Vector Density_Function(long N, Matrix C){
     return density;
 }
 
-Vector entropy_vs_N(long minn, long maxn, double W, string boundary, string chain, double J=1, double sigma=0.1, double h=0.6, double theta=0.5, string entropy_order = "forward"){
+Vector entropy_vs_N(long minn, long maxn, double W, string boundary, string chain, double J=1, double sigma=0.3, double h=0.6, double theta=0.5, string entropy_order = "forward"){
     Vector Entropy_N(maxn);
     long j = 0;
     for (int i=minn; j<maxn; i++){
-        // if (chain == "fibonacci" || chain == "sturmian" || chain == "fib_57" || chain == "fib_59"){
-        //     j = Fibonacci_num(i)+1;
-        // }
-        // else{j = i;}
-        j = i;
+        if (chain == "fibonacci" || chain == "sturmian" || chain == "fib_57" || chain == "fib_59"){
+            j = Not_Fibonacci_num(i,chain)+1;
+        }
+        else{j = i;}
+        // j = i;
+        std::cout << "Calculating for N = " << j << std::endl;
         Matrix H(j);
         if (j%2==0){
             H = Chain_H(j,W,boundary,chain,J,sigma,h,theta);
