@@ -1,6 +1,8 @@
-# Data files to ignore
-data/
+# Data files to ignore (simulation output), except the small sample set
+data/*
+!data/sample/
 images/
 
 # Python Environment
-venv/
+venv/bin/:
+simulation
